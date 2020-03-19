@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "lib": [ "es2020", "dom", "esnext.array"],
+    "target": "ES2018",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true
+  }
+}

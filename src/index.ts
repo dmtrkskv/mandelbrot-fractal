@@ -7,6 +7,9 @@ type TVec2 = [number, number];
 const getPixels = (w: number, h: number): TVec2[] =>
     Array.from({ length: w * h }, (_, i) => [i % w, Math.floor(i / h)]);
 
+const getOrigin = (viewCenter: TVec2, canvasSize: TVec2, scale: number) => 
+    viewCenter.map((n, i) => n - (canvasSize[i] / 2) / scale) as TVec2;
+
 const proximityOfComplex = (z: Complex, iterations: number) =>
     (function f(zn: Complex, i: number): number {
         const znSqr = zn.square();
@@ -14,14 +17,14 @@ const proximityOfComplex = (z: Complex, iterations: number) =>
         return (znSqr.module() > 2 || i === iterations) ? i / iterations : f(znSqr.add(z), i + 1);
     })(new Complex(0, 0), 0);
 
-const getProximities = (areaPoints: TVec2[], iterations: number) =>
-    areaPoints.map(([x, y]) => proximityOfComplex(new Complex(x, y), iterations));
+const getProximities = (viewPoints: TVec2[], iterations: number) =>
+    viewPoints.map(([x, y]) => proximityOfComplex(new Complex(x, y), iterations));
 
-const pixelToAreaPoint = (pixel: TVec2, origin: TVec2, scale: number) =>
+const pixelToViewPoint = (pixel: TVec2, origin: TVec2, scale: number) =>
     pixel.map((n, i) => origin[i] + n / scale) as TVec2;
 
-const getAreaPoints = (pixels: TVec2[], origin: TVec2, scale: number) =>
-    pixels.map(pixel => pixelToAreaPoint(pixel, origin, scale));
+const getViewPoints = (pixels: TVec2[], origin: TVec2, scale: number) =>
+    pixels.map(pixel => pixelToViewPoint(pixel, origin, scale));
 
 (() => {
     const canvas = document?.getElementById("canvas-1") as HTMLCanvasElement;
@@ -33,14 +36,13 @@ const getAreaPoints = (pixels: TVec2[], origin: TVec2, scale: number) =>
 
     const pixels = getPixels(width, height);
 
-    // const origin = [.35, 0.35] as TVec2;
-    // const areaWidth = .001;
-    const origin = [-2, -1] as TVec2;
-    const areaWidth = 3;
-    const scale = width / areaWidth;
+    const viewCenter = [-.8, 0] as TVec2;
+    const viewWidth = 3;
+    const scale = width / viewWidth;
 
-    const areaPoints = getAreaPoints(pixels, origin, scale);
-    const proximities = getProximities(areaPoints, iterations);
+    const origin = getOrigin(viewCenter, [width, height], scale);
+    const viewPoints = getViewPoints(pixels, origin, scale);
+    const proximities = getProximities(viewPoints, iterations);
     const colors = proximities.map(getBWColor);
 
     render(colors, ctx, width, height);

@@ -1,7 +1,7 @@
 import { Complex } from "./Complex";
 import { getBWColor } from "./color";
-import { getFractalRenderer, getOutlineRenderer, clearCanvas } from "./renderer";
-import { getCanvasObservable } from "./observer";
+import { getFractalRenderer, getOutlineRenderer, clearCanvas } from "./renderers";
+import { getCanvasObservable } from "./observables";
 
 export type TVec2 = [number, number];
 type TOutlineData = { center: TVec2, scale: number };

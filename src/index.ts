@@ -1,14 +1,16 @@
 import { Complex } from "./Complex";
 import { getBWColor } from "./color";
-import { render } from "./renderer";
+import { getFractalRenderer, getOutlineRenderer, clearCanvas } from "./renderer";
+import { getCanvasObservable } from "./observer";
 
-type TVec2 = [number, number];
+export type TVec2 = [number, number];
+type TOutlineData = { center: TVec2, scale: number };
 
-const getPixels = (w: number, h: number): TVec2[] =>
+const getPixels = ([w, h]: TVec2): TVec2[] =>
     Array.from({ length: w * h }, (_, i) => [i % w, Math.floor(i / h)]);
 
-const getOrigin = (viewCenter: TVec2, canvasSize: TVec2, scale: number) => 
-    viewCenter.map((n, i) => n - (canvasSize[i] / 2) / scale) as TVec2;
+const getViewOrigin = (dimensions: TVec2, viewCenter: TVec2, scale: number) =>
+    viewCenter.map((n, i) => n - (dimensions[i] / 2) / scale) as TVec2;
 
 const proximityOfComplex = (z: Complex, iterations: number) =>
     (function f(zn: Complex, i: number): number {
@@ -26,24 +28,60 @@ const pixelToViewPoint = (pixel: TVec2, origin: TVec2, scale: number) =>
 const getViewPoints = (pixels: TVec2[], origin: TVec2, scale: number) =>
     pixels.map(pixel => pixelToViewPoint(pixel, origin, scale));
 
+const getRenderer = (
+    canvasCleaner: () => void,
+    fractalRenderer: () => void,
+    outlineRenderer: (center: TVec2, scale: number) => void
+) =>
+    (outlineData?: TOutlineData) => {
+        canvasCleaner();
+
+        fractalRenderer();
+
+        if (outlineData) {
+            const { center, scale } = outlineData;
+            outlineRenderer(center, scale);
+        }
+    }
+
+// init
 (() => {
     const canvas = document?.getElementById("canvas-1") as HTMLCanvasElement;
-    const { width, height } = canvas;
+    const { width: w, height: h } = canvas;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // canvas properties setting
+    const dimensions: TVec2 = [w, h];
+    const pixels = getPixels(dimensions);
+
+    // fractal properties will be adjustable later
+    const viewCenter = [-.8, 0] as TVec2;
+    const scale = w / 3; // w / viewWidth
     const iterations = 500;
 
-    const pixels = getPixels(width, height);
-
-    const viewCenter = [-.8, 0] as TVec2;
-    const viewWidth = 3;
-    const scale = width / viewWidth;
-
-    const origin = getOrigin(viewCenter, [width, height], scale);
+    // fractal data calculating
+    const origin = getViewOrigin(dimensions, viewCenter, scale);
     const viewPoints = getViewPoints(pixels, origin, scale);
     const proximities = getProximities(viewPoints, iterations);
-    const colors = proximities.map(getBWColor);
 
-    render(colors, ctx, width, height);
+    const fractalColors = proximities.map(getBWColor);
+
+    // render functions setting
+    const canvasCleaner = () => clearCanvas(ctx, dimensions);
+    const fractalRenderer = getFractalRenderer(ctx, dimensions, fractalColors);
+    const outlineRenderer = getOutlineRenderer(ctx, dimensions);
+
+    const render = getRenderer(canvasCleaner, fractalRenderer, outlineRenderer);
+
+    render();
+
+    // subscribe to observable
+    const canvas$ = getCanvasObservable(canvas);
+
+    canvas$.subscribe(([scale, center]) => {
+        render({ scale, center });
+    });
 })();
+
+

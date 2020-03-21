@@ -11,7 +11,9 @@ export const getCanvasObservable = (canvas: HTMLCanvasElement) => {
 
     const mouseCenter$ = mouseMove$.pipe(map(e => {
         const { clientX, clientY } = e as MouseEvent;
-        return [clientX, clientY] as TVec2;
+        const {offsetLeft, offsetTop} = canvas;
+
+        return [clientX - offsetLeft, clientY - offsetTop] as TVec2;
     }));
 
     const wheelScale$ = mouseWheel$.pipe(

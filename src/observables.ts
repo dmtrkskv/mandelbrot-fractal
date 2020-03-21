@@ -3,7 +3,15 @@ import { fromEvent, combineLatest } from "rxjs";
 import { scan, map, startWith, share, withLatestFrom, tap } from "rxjs/operators";
 
 export const getCanvasObservables = (canvas: HTMLCanvasElement) => {
-    const wheelDeltaToScale = (delta: number) => delta < 0 ? -(125 / delta) : delta / 125;
+    const wheelDeltaUnit = 125;
+
+    const wheelDeltaToZoom = (delta: number) => {
+        if (delta === 0) {
+            return 1;
+        }
+
+        return delta < 0 ? delta / -wheelDeltaUnit : wheelDeltaUnit / delta;
+    }
 
     const mouseDown$ = fromEvent(document, "mousedown");
     const mouseMove$ = fromEvent(document, "mousemove");
@@ -16,21 +24,22 @@ export const getCanvasObservables = (canvas: HTMLCanvasElement) => {
         return [x - offsetLeft, y - offsetTop] as TVec2;
     }));
 
-    const initialWheelDelta = -250;
+    const initialWheelDelta = -2 * wheelDeltaUnit;
 
     const wheelScale$ = mouseWheel$.pipe(
         tap(e => e.preventDefault()),
         map(e => (e as MouseWheelEvent).deltaY),
         scan((acc, delta) => acc + delta, initialWheelDelta),
-        map(wheelDeltaToScale),
-        startWith(wheelDeltaToScale(initialWheelDelta))
+        map(wheelDeltaToZoom),
+        startWith(wheelDeltaToZoom(initialWheelDelta))
     );
 
     const sharedSelect$ = combineLatest(wheelScale$, mouseCenter$).pipe(share());
 
     const confirm$ = mouseDown$.pipe(
         withLatestFrom(sharedSelect$),
-        map(values => values[1])
+        map(values => values[1]),
+        startWith()
     );
 
     return { confirm$, select$: sharedSelect$ };

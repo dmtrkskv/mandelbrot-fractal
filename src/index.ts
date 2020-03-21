@@ -1,7 +1,7 @@
 import { Complex } from "./Complex";
 import { getBWColor } from "./color";
 import { getFractalRenderer, getOutlineRenderer, clearCanvas } from "./renderers";
-import { getCanvasObservable } from "./observables";
+import { getCanvasObservables } from "./observables";
 
 export type TVec2 = [number, number];
 type TOutlineData = { center: TVec2, scale: number };
@@ -77,11 +77,15 @@ const getRenderer = (
     render();
 
     // subscribe to observable
-    const canvas$ = getCanvasObservable(canvas);
+    const { select$, confirm$ } = getCanvasObservables(canvas);
 
-    canvas$.subscribe(([scale, center]) => {
+    select$.subscribe(([scale, center]) => {
         render({ scale, center });
     });
+
+    confirm$.subscribe(([scale, center]) => {
+        console.warn({ scale, center });
+    })
 })();
 
 

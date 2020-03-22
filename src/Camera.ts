@@ -8,44 +8,54 @@ const pixelToViewPoint = (pixel: TVec2, origin: TVec2, scale: number) =>
 export class Camera {
     private readonly iterations = 1000;
     private readonly pixels: TVec2[];
-    private proximities?: number[];
-    private snapshot?: TRgba[];
-    private scale: number;
-    private capturedPoints?: TVec2[]
-    private capturedPointsOrigin: TVec2;
+    private proximities!: number[];
+    private snapshot!: TRgba[];
+    private capturedPoints!: TVec2[];
 
-    constructor(private readonly dimensions: TVec2) {
-        const getPixels = ([w, h]: TVec2): TVec2[] =>
+    constructor(
+        private readonly dimensions: TVec2,
+        private origin: TVec2,
+        private scale: number,
+        private colorizer: (p: number) => TRgba
+    ) {
+        const generatePixels = ([w, h]: TVec2): TVec2[] =>
             Array.from({ length: w * h }, (_, i) => [i % w, Math.floor(i / h)]);
 
-        this.pixels = getPixels(dimensions);
-        this.scale = dimensions[0] / 3;
-        this.capturedPointsOrigin = [-2.5, -1.5];
+        this.pixels = generatePixels(dimensions);
+
+        this.capture();
+        this.colorize();
+    }
+
+    private colorize() {
+        console.time("colorize");
+        this.snapshot = this.proximities.map(this.colorizer);
+        console.timeEnd("colorize");
     }
 
     private capture() {
+        console.time("capture of points");
         this.capturedPoints = this.pixels.map(pixel =>
-            pixelToViewPoint(pixel, this.capturedPointsOrigin, this.scale));
+            pixelToViewPoint(pixel, this.origin, this.scale));
+        console.timeEnd("capture of points");
+
+        console.time("proximities");
+        this.proximities = getProximities(this.capturedPoints, this.iterations);
+        console.timeEnd("proximities");
+
     }
 
-    public move(cursorCenter: TVec2, zoom: number) {
-        this.capturedPointsOrigin = this.capturedPointsOrigin.map((prevOriginItem, i) => {
+    public moveByCursor(cursorCenter: TVec2, zoom: number) {
+        this.origin = this.origin.map((prevOriginItem, i) => {
             const cursorOriginItem = cursorCenter[i] - this.dimensions[i] / 2 / zoom;
-            return prevOriginItem + cursorOriginItem / this.scale;          
+            return prevOriginItem + cursorOriginItem / this.scale;
         }) as TVec2;
 
         this.scale *= zoom;
 
         this.capture();
-
-        if (this.capturedPoints) {
-            this.proximities = getProximities(this.capturedPoints, this.iterations);
-        }
-    }
-
-    public colorize(mapper: (p: number) => TRgba) {
-        this.snapshot = this.proximities?.map(mapper);
-    }
+        this.colorize();
+    }    
 
     public getSnapshot() {
         return this.snapshot;

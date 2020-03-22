@@ -1,7 +1,6 @@
 import { getBWColor } from "./colorizers";
 import { Renderer } from "./Renderer";
 import { getCanvasObservables } from "./observables";
-import { startWith } from "rxjs/operators";
 import { Camera } from "./Camera";
 
 export type TVec2 = [number, number];
@@ -12,8 +11,9 @@ const ctx = canvas.getContext("2d");
 if (ctx) {
     const { width: w, height: h } = canvas;
     const dimensions: TVec2 = [w, h];
-    const camera = new Camera(dimensions);
+    const camera = new Camera(dimensions, [-2.5, -1.5], w / 3, getBWColor);
     const renderer = new Renderer(ctx, dimensions);
+    renderer.updateFractalData(camera.getSnapshot());
 
     const { select$, confirm$ } = getCanvasObservables(canvas);
 
@@ -21,17 +21,10 @@ if (ctx) {
         renderer.updateOutlineData({ zoom, center: cursorCenter });
     });
 
-    confirm$.pipe(
-        startWith([1, [w / 2, h / 2]] as [number, TVec2])
-    )
+    confirm$
         .subscribe(([zoom, cursorCenter]) => {
-            camera.move(cursorCenter, zoom);
-            camera.colorize(getBWColor);
-            const snapshot = camera.getSnapshot();
-
-            if (snapshot) {
-                renderer.updateFractalData(snapshot);
-            }
+            camera.moveByCursor(cursorCenter, zoom);
+            renderer.updateFractalData(camera.getSnapshot());
         });
 }
 

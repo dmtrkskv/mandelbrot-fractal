@@ -19,7 +19,7 @@ export const getCanvasObservables = (canvas: HTMLCanvasElement) => {
             wheelDeltaUnit / (delta + wheelDeltaUnit);
     }
 
-    const mouseDown$ = fromEvent(document, "mousedown");
+    const click$ = fromEvent(canvas, "click");
     const mouseMove$ = fromEvent(document, "mousemove");
     const mouseWheel$ = fromEvent(canvas, "mousewheel");
 
@@ -43,7 +43,7 @@ export const getCanvasObservables = (canvas: HTMLCanvasElement) => {
 
     const sharedSelect$ = combineLatest(wheelScale$, mouseCenter$).pipe(share());
 
-    const confirm$ = mouseDown$.pipe(
+    const confirm$ = click$.pipe(
         withLatestFrom(sharedSelect$),
         map(values => values[1]),
         startWith()

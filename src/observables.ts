@@ -1,6 +1,6 @@
 import { TVec2 } from "./index";
 import { fromEvent, combineLatest } from "rxjs";
-import { scan, map, startWith, share, withLatestFrom, tap } from "rxjs/operators";
+import { scan, map, startWith, share, withLatestFrom, tap, distinctUntilChanged } from "rxjs/operators";
 
 const clamp = (n: number, lower: number, upper: number) => {
     return n >= upper ? upper : (n <= lower ? lower : n);
@@ -36,6 +36,7 @@ export const getCanvasObservables = (canvas: HTMLCanvasElement) => {
         tap(e => e.preventDefault()),
         map(e => (e as MouseWheelEvent).deltaY),
         scan((acc, delta) => clamp(acc + delta, -12 * wheelDeltaUnit, 0), initialWheelDelta),
+        distinctUntilChanged(),
         map(wheelDeltaToZoom),
         startWith(wheelDeltaToZoom(initialWheelDelta))
     );

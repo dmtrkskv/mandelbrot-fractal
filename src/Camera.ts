@@ -21,9 +21,6 @@ export class Camera {
         this.pixels = getPixels(dimensions);
         this.scale = dimensions[0] / 3;
         this.capturedPointsOrigin = [-2.5, -1.5];
-
-        // this.capturedPointsOrigin = centralCapturedPoint.map((n, i) =>
-        //     n - (dimensions[i] / 2) / this.scale) as TVec2;
     }
 
     private capture() {

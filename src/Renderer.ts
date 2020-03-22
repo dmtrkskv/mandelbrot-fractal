@@ -5,13 +5,14 @@ type TCursorData = { center: TVec2, zoom: number };
 
 const getFractalRenderer = (ctx: CanvasRenderingContext2D, [w, h]: TVec2, colors: TRgba[]) => {
     const imageData = ctx.createImageData(w, h);
-
     const { data } = imageData;
 
-    // todo:
-    console.time("slow");
-    colors.flat().forEach((n, i) => data[i] = n);
-    console.timeEnd("slow");
+    // не так красиво, как flat, но быстро
+    colors.forEach((color, i) => {
+        color.forEach((value, j) => {
+            data[i * 4 + j] = value;
+        });
+    });
 
     return () => {
         ctx.putImageData(imageData, 0, 0);
@@ -19,7 +20,7 @@ const getFractalRenderer = (ctx: CanvasRenderingContext2D, [w, h]: TVec2, colors
 }
 
 const getOutlineRenderer = (ctx: CanvasRenderingContext2D, originalSize: TVec2) =>
-    ({center, zoom = 1} : TCursorData) => {
+    ({ center, zoom = 1 }: TCursorData) => {
         const [w, h] = originalSize.map(n => n / zoom);
         const [x, y] = center;
 
@@ -60,7 +61,7 @@ export class Renderer {
         this.render();
     }
 
-    public render() { 
+    public render() {
         this.canvasCleaner();
         this.fractalRenderer?.();
 

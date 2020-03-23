@@ -5,13 +5,13 @@ import { Camera } from "./Camera";
 
 export type TVec2 = [number, number];
 
-const canvas = document?.getElementById("canvas-1") as HTMLCanvasElement;
+const canvas = document?.getElementById("fractal") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
 if (ctx) {
     const { width: w, height: h } = canvas;
     const dimensions: TVec2 = [w, h];
-    const camera = new Camera(dimensions, [-2.5, -1], w / 3, getBWColor);
+    const camera = new Camera(dimensions, [-2, -1.1], w / 3, getBWColor);
     const renderer = new Renderer(ctx, dimensions);
     renderer.updateFractalData(camera.getSnapshot());
 

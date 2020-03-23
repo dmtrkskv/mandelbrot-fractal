@@ -19,10 +19,10 @@ export class Camera {
         private colorizer: (p: number) => TRgba
     ) {
         const generatePixels = ([w, h]: TVec2): TVec2[] =>
-            Array.from({ length: w * h }, (_, i) => [i % w, Math.floor(i / h)]);
-
+            Array.from({ length: w * h }, (_, i) => [i % w, Math.floor(i / w)]);
+       
         this.pixels = generatePixels(dimensions);
-
+ 
         this.capture();
         this.colorize();
     }
@@ -45,10 +45,10 @@ export class Camera {
 
     }
 
-    public moveByCursor(cursorCenter: TVec2, zoom: number) {
-        this.origin = this.origin.map((prevOriginItem, i) => {
-            const cursorOriginItem = cursorCenter[i] - this.dimensions[i] / 2 / zoom;
-            return prevOriginItem + cursorOriginItem / this.scale;
+    public moveByCursor(cursorCenter: TVec2, zoom: number) {    
+        this.origin = this.origin.map((n, i) => {
+            const outlineDelta = cursorCenter[i] - this.dimensions[i] / 2 / zoom;
+            return n + outlineDelta / this.scale;
         }) as TVec2;
 
         this.scale *= zoom;
